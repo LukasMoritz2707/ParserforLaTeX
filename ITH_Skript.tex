@@ -1,0 +1,416 @@
+\documentclass[a4paper]{article}
+
+\usepackage{MyCommands}
+\usepackage{tabularx}
+\usepackage{xltabular}
+\usepackage{dsfont}
+
+\newcommand{\Brace}[1]{$\lbrace #1 \rbrace$}
+
+\title{Theoretische Infrormatik SS24 \\ bei Prof. Dr. Felix Joos}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\newpage
+\tableofcontents
+\newpage
+
+\textcolor{blue}{\underline{\textbf{Überblick:}}} Einführung eines formalen Berechnungmodells (Turingmaschine) \\
+\hspace*{1.9cm} - formale Beschreibung was Computer/Algorithmen können \\
+\hspace*{1.9cm} $\rightsquigarrow$ Klassifizierung von Problemen bzgl. ihrere Schwierigkeit \\
+\begin{xltabular}{\linewidth}{Xp{1cm}X}
+    Theoretische idealistisches Modell \newline unendlicher Speicher & $\leftrightarrow$ & Praxis endlicher Speicher, aber immer möglich mehr Speicher zu orgnaisieren \\
+
+\end{xltabular}
+Wichtiges Konzept: Einschränkung bzgl Zeit (Rechenschritte), Speicher, Arbeitsspreicher\\
+Problemen: Eingabe (z.b. 011-Folge), Ausgabe (z.b. 011-Folge) \\
+$\rightsquigarrow$ wichtiger Spezialfall = 0 'Ablehnen' / 'Nein' \\
+\hspace*{3.9cm} 1 'Annehmen' / 'Ja' \\
+\section{1. Grundlagen}
+\subsection{1.1 Notation und Begriffe}
+\begin{itemize}
+ \item $\N$ bezeichnet die Menge $\lbrace 1,2,\dots \rbrace$
+ \item  \NN \ = $\N \cup \lbrace 0 \rbrace$
+ \item Für n $\in$ \NN \ ist [n] = $\lbrace 1,\dots,n \rbrace$ und $[n]_0$ = $\lbrace 0,1,\dots,n \rbrace$
+ \item Für eine Menge A und n $\in \N$ sei $A^n = \lbrace (a_1,\dots,a_n): a_1,\dots,a_n \in A \rbrace$
+ \item Für n $\in \N$ ist eine \ulcolor{n-äre partielle Funktion} $\varphi$ : $A^n \rightsquigarrow B$ eine Funktion mit dom ($\varphi) \subseteq A^n$ und Im($\varphi) \subseteq B$. Für $a_1,\dots,a_n \in A$ bedeutet $\varphi(a_1,\dots,a_n)\downarrow$, dass ($a_1,\dots,a_n) \in$ dom ($\varphi$) gilt und $\varphi(a_1,\dots,a_n)\uparrow$ bedeutet, dass ($a_1,\dots,a_n) \not \in$ dom ($\varphi$) gilt. Statt $\varphi(a_1,\dots,a_n) \uparrow$ schreiben wir auch $\varphi(a_1,\dots,a_n) = \uparrow$ Die partielle Funktion $\varphi$ ist total, wenn dom ($\varphi$) = $A^n$
+\end{itemize}
+\subsection{1.2 Alphabete, Wörter, Sprachen}
+Eingaben und Ausgaben in unseren Modellen sind 'Wörter' \\
+\\
+\
+\begin{DefBox}{(Alphabet, Symbol)}
+Ein \ulcolor{Alphabet} ist eine nicht leere endliche Menge $\Sigma$. Das Alphabet ist $|\Sigma|$-är. Die Elemente von $\Sigma$ heißen \ulcolor{Symbole} oder \ulcolor{Buchstaben}.
+\end{DefBox}
+
+\begin{DefBox}{(Wort)}
+Ein Wort über einenm Alphabet $\Sigma$ ist eine endliche Folge von Symbolen in $\Sigma$ Die \ulcolor{Länge} einers Wortes w ist $|w|$ Für i $\in [|w|]$ ist \ulcolor{w(i)} das i-te Element von w. Für Symbole $a_1,\dots,a_n \in \Sigma$ bezeichne $a_1,\dots,a_n$ das Wort w der Länge n mit w(i) = $a_i$ $\forall i \in [n].$ Das Wort der Länge 0 heißt \ulcolor{leeres Wort} und wird mit $\lambda$ bezeichnet.
+\end{DefBox}
+
+\begin{DefBox}{(Binäralphabet)}
+Das Alphabet $\lbrace 0,1 \rbrace$ heißt \ulcolor{Binäralphabet}. Die Wörter über diese Alphabet heißen \ulcolor{Binärwörter}
+\end{DefBox}
+
+\begin{DefBox}{(Sprache)}
+Eine \ulcolor{Sprache} ist eine Menge von Wörtern über einem gemeinsamen Alphabet.
+\end{DefBox}
+
+\begin{DefBox}{}
+Die Menge aller Wörter über $\Sigma$ wird mir $\Sigma^*$ bezeichent. Für n $\in$ \NN \ setzen wir $\Sigma^{\leq n} := \lbrace w \in \Sigma^* : |w| \leq n \rbrace$, $\Sigma^{=n} = \lbrace w \in \Sigma° : |w| = n \rbrace \Sigma^{\geq n} = \lbrace w \in \Sigma* : |w| \geq n \rbrace$ und $ \Sigma^+ := \Sigma^{\geq 1}$
+\end{DefBox}
+
+\begin{DefBox}{(Verkettung)}
+Für Wörter $w_1,w_2$ ist die Verkettung $w_1 \circ w_2$ auch $w_1 w_2$ von $w_1$ und $w_2$ definitiert durch
+\begin{align*}
+w_1 \circ w_2 := w_1(1) \dots w_1(|w_1|) w_2(1) \dots w_2(|w_2|)
+\end{align*}
+Für ein Wort w und $n \in$ \NN \ ist $w^n$ induktiv definiert durch $w^n = \lambda$ fall w = 0 und $w^n := w \circ w^{n-1}$ falls $n \geq 1$ \\
+Für Sprachen $L_1,L_2$ ist $L_1 \circ L_2$ auch $L_1 L_2$, definiert durch
+\begin{align*}
+ L_1 \circ L_2 := \lbrace w_1,w_2 : w_1 \in L_1, w_2 \in L_2 \rbrace
+\end{align*}
+Für eine Sprache L und n $\in$ \NN \ ist $L^n$ induktiv definiert durch $L^n = \lbrace \lambda \rbrace$ falls n = 0 und $L^n := L \circ L^{n-1}$ falls n $\geq$ 1. Für eine Sprache L sein $L^* := \displaystyle\bigcup_{n\in \N_0} L^n$ \\
+Für ein Wort w und eine Sprache L sei wL := $\lbrace w \rbrace L$ und Lw := $L\lbrace w \rbrace$.
+\end{DefBox}
+Die Operation $^*$ heißt \ulcolor{Kleene-Stern} (Stephan Cole Kleene, 1909-1994). Wir legen folgende Korrelation fest: $^*$ und $^n$ binden stärker als $\circ$ somit gilt $uv^n = u \circ v^n$. \\
+\\
+\begin{DefBox}{(Präfix, Infix, Suffiy)}
+Seien u,v Wörter
+\begin{itemize}
+ \item[(i)] u ist ein Präfix von v, kurz u $\sqsubseteq$ v, falls es ein Wort w gibt mit uw = v.
+ \item[(ii)] u ist eine Infix von v, falls es Wörter $w_1,w_2$ gibt mit $w_1 u w_2$ = v.
+ \item[(iii)] u ist ein Suffix von v, falls es ein Wort w gibt mit wu = v.
+\end{itemize}
+\end{DefBox}
+
+\begin{DefBox}{(präfixfrei)}
+Eine Sprache L heißt \ulcolor{präfixfrei} wenn u $\sqsubseteq$ v $\Rightarrow$ u = v $\forall u,v \in L$ gilt.
+\end{DefBox}
+
+\begin{DefBox}{(Homomorphismus)}
+ Für Alphabete $\Sigma$ und $\Gamma$ heißt eine Funktion $\varphi : \Sigma^* \rightarrow \Gamma^*$ \ulcolor{Homomorphismus} von Sprachen, wenn $\varphi(uv) = \varphi(u) \varphi(v) \ \forall u,v \in \Sigma^*$.
+\end{DefBox}
+
+\begin{DefBox}{(Lineare Ordnung)}
+ Eine \ulcolor{lineare Ordnung}, auch totale Ordnung, auf einer Menge A ist eine Relation $\leq \subseteq A^2$, so dass folgende Eigenschaften erfüllt sind. (wie für Relationen üblich verwenden wir Infixnotation, schreiben also für a,b $\in$ A, den Ausdruck a $\leq$ b, statt (a,b) $\in \leq$):
+ \begin{itemize}
+  \item[(i)] a $\leq$ a $\forall a \in A$ (Reflexifität)
+  \item[(ii)] a $\leq b \wedge b \geq a \Rightarrow a = b$ (Antisysmmetrie)
+  \item[(iii)] a $\leq b \wedge b \leq c \Rightarrow a \leq c$ (Transitivität)
+  \item[(iv)] a $\leq b \vee b \leq a \forall a,b \in A$ (Totalität)
+\end{itemize}
+\end{DefBox}
+
+\begin{DefBox}{(lexikographische Ordnung)}
+ Ist $\Sigma$ ein Alphabet und $\leq$ eine lineare Ordnung auf $\Sigma$, so ist die zugehörige \ulcolor{lexikographische Ordnung} $\leq_{lex}$ auf $\Sigma^*$ die lineare Ordnung für die u $\leq_{lex}$ v genau dann für u,v $\in \Sigma^*$, wenn eine der folgenden zwei Bedingungen efüllt ist:
+ \begin{itemize}
+  \item[(1)] Ist i $\in \Box u \Box$ minimal mit u(i) $\neq$ v(i), so gilt u(i) $\leq$ v(i).
+  \item[(2)] u $\sqsubseteq$ v.
+ \end{itemize}
+\end{DefBox}
+
+\begin{DefBox}{(längenlexikographische Ordnung)}
+ Ist $\Sigma$ ein Alphabet und $\leq$ eine lineare Ordnung auf $\Sigma$, so ist die zugehörige $\leq$ gehörige \ulcolor{längenlexikographische Ordnung} $\leq_{llex}$ auf $\Sigma^*$ die lineare Ordnung für die u $\leq_{llex}$ v genau dann für u,v $\in \Sigma^*$ gilt, wenn eine der folgenden Bedingungen erfüllt ist:
+ \begin{itemize}
+  \item[(1)] $|u| \leq |v|$
+  \item[(2)] $|u| = |v|$ und u $\leq_{lex} v$.
+ \end{itemize}
+\end{DefBox}
+
+\textcolor{blue}{\underline{\textbf{Hinweis:}}} Oft ist die Ordnung auf $\Sigma$ nicht explizit erwähnt und 'klar' vom Kontext/Benennung\\
+\\
+\stepBoxCounter
+\Bem{Bemerkung 1.13} \\
+Sei $\Sigma$ ein Alphabet. Die Relation $\leq_{lex}$ und $\leq_{llex}$ sind lineare Ordnungen auf $\Sigma^*$ \\
+\\
+\Bem{Bemerkung 1.14} \\
+Sei $\Sigma$ ein Alphabet. $\forall w \in \Sigma^*$ ist $\lbrace v \in \Sigma: v \leq_{llex} w \rbrace$ endlich. \\
+Dies erlaubt es uns die Wörter über einem Alphabet $\Sigma$ im längenlexikographische Ordnung/Reihenfolge $w_1,w_2,w_3 \dots$ zu betrachten, wobei wir für i $\in \N$ induktiv als kleistes Element von $\Sigma^* \backslash \lbrace w_1,\dots,w_{i-1} \rbrace$ gewählt ist. Wir identifiziern oft \NN \ mit $\lbrace 0,1 \rbrace^*$ indem wie $i \in$ \NN \ mit dem in längenlexikographische Reihenfolge ($i+1$)ten Wort $w_{i+1} \in \lbrace 0,1 \rbrace^*$ identifiziern.
+
+\setBoxCounter{14}
+
+\begin{DefBox}{}
+Es bezeichne bin: \NN \ $\rightarrow \lbrace 0,1 \rbrace^*$ die Funktion, für die bin(i) das (i+1)te Wort in $\lbrace 0,1 \rbrace^*$ in längenlexikographische Reihenfolge ist $\forall i \in$ \NN.
+\end{DefBox}
+
+bin(0): = $\lambda$ \\
+bin(1): = 0 \\
+bin(2): = 1 \\
+bin(3): = 00 \\
+bin(4): = 01 \\
+\\
+\Bem{Bemerkung 1.16} \\
+$\forall i \in$ \NN \ ist 1 $\circ$ bin(0) die Binärdarstellung von i+1. Umgekehrt ist w das $(2^{|w|} + \displaystyle\sum_{i \in [|w|]} w(i))$-te Binärwört $\forall w \in \lbrace 0,1 \rbrace^*$
+
+\stepDefCounter
+\setBoxCounter{0}
+%\section{Berechenbarkeit}
+\section{2 Turingmaschine}
+Wir betrachten nun das zentrale Berechnungsmodell der Vorlesung:
+\ulcolor{Turingmaschine} \\
+Ein intuitive Beschreibung ist wie folgt:
+\begin{itemize}
+ \item Es gibt einen/mehrere unendliche Bänder (=Speicher), aber endlich viele Bänder!
+ \item Auf einem Band gibt es eine Eingabe
+ \item Die TM besitzt einen Zustand (endlich viele Werte möglich)
+ \item Für jedes Band gibt es einen Schreib/Lesekopf
+ \item In jedem Schritt verfährt die Maschine wie folgt: \\
+ \\
+ Abhängig von den gerade gelesenen Symbolen und ihrem Zustand geht die TM in einen neuen Zustand, schreibt auf jedes Feld, wo die Köpfe gerade stehen und bewegt die Köpfe um maximal eine Position. \\
+ \\
+ Das Vorgehen im jedem Schritt muss nicht eindeutig durch die Regeln festgelegt sein. (Stichwort: (nicht)deterministische TM)
+ \item Stellt die TM ihr Arbeiten ein, so wird die Ausgabe vom Zustand oder vom Band abgelesen
+\end{itemize}
+\begin{DefBox}{(Turingmaschine, Alan Turing, 1936)}
+ Sei k $\in \N$. Eine \ulcolor{k-Band-Turingmaschine}, kurz k-TM, ist ein Tupel M = \TM. Dabei ist
+ \begin{itemize}
+  \item Q eine endliche Menge, die \ulcolor{Zustandsmenge}
+  \item $\Sigma$ das \ulcolor{Eingabealphabet}, ein Alphabet mit dem $\Box \not \in \Sigma$
+  \item $\Gamma$ das \ulcolor{Bandalphabet}, ein Alphabet mit $\Sigma \subseteq \Gamma$ und $\Box \in \Gamma \backslash \Sigma$
+  \item $\Delta \subseteq Q \times \Gamma^k \times Q \times \Gamma^k \times \lbrace L,S,R \rbrace^k$ die \ulcolor{Übergangsrelation}
+  \item $s \in Q$ der \ulcolor{Startzustand}
+  \item $F \subseteq Q$ die Menge der \ulcolor{akzeptierten Zustände}
+ \end{itemize}
+\end{DefBox}
+Das Symbol $\Box$ heißt \ulcolor{Blank}. Die Elemente von $\Delta$ heißen \ulcolor{Instruktionen}. Für eine Instruktion (q, $a_1,\dots,a_k, q', a'_1,\dots,a'_k, B_1,\dots,B_k)$ heißt (q, $a_1,\dots,a_k$) \ulcolor{Bedingungsteil} und ($q', a'_1,\dots,a'_k, B_1,\dots,B_k)$ \ulcolor{Anwengungsteil}. Die TM M ist eine deterministische k-TM, kurz k-DTM, wenn es $\forall b \in Q \times \Gamma^k$ höchstens eine Instruktion i $\in \Delta$ mit Bedingungsteil b gibt. \\
+\\
+\begin{DefBox}{(Konfiguration)}
+Sei M = \TM eine k-TM. Eine \ulcolor{Konfiguration} von M ist ein Tupel
+\begin{align*}
+ C = (q,w_1,\dots,w_k,p_1,\dots,p_k) \in Q \times (\Gamma^*)^k \times \N^k
+\end{align*}
+mit $p_i \in [|w_i|] \ \forall i \in [k]$.
+\end{DefBox}
+
+Die \ulcolor{Startkonfiguration} von M zur Eingabe ($u_1,\dots,u_n) \in (\Sigma^*)^n$, wobei n $\in \N$ ist, die Konfiguration
+\begin{align*}
+ start_M (u_1,\dots,u_n) := s, \underbrace{u_1 \Box u_2 \Box \dots \Box u_n}_{w_1}, \underbrace{\Box}_{w_2} , \dots, \underbrace{\Box}_{w_3}, 1, \dots, 1)
+\end{align*}
+Die Konfiguration C ist eine \ulcolor{Stopkonfiguration} von M, wenn es keine Instruktionen i $\in \Delta$ mit Bedingungsteil (q, $w_1(p_1),\dots w_k(p_k))$. \\
+\\
+\begin{DefBox}{(Nachfolgekonfiguration)}
+Sei M = \TM eine k-TM. Für Konfigurationen
+\begin{align*}
+ C = (q,w_1,\dots,w_k,p_1,\dots,p_k) und C' = (q',w'_1,\dots,w'_k,p'_1,\dots,p'_k)
+\end{align*}
+von ist die Konfiguration C' \ulcolor{Nachfolgekonfiguration} von C, wenn es eine Instruktion (q, $w_i(p_i), \dots, w_k(p_k), q', a'_1, \dots, a'_k, B_1, \dots, B_k) \in \Delta$ gibt, sodass
+\begin{align*}
+ w'_i \begin{cases}
+        \Box a'_i w_i (2) \dots w_i(|w|_i) & falls \ p_i = 1 \ und \ B = L \\
+        w_i(1) \dots w_i(|w_i|-1) a'_i \Box & falls \ p_i = |w_i| \ und \ B_i = R \\
+        w_i(1) \dots w_i(p_i - 1) a'_i w_i(p_i + 1) \dots w_i (|w|) & sonst
+      \end{cases}
+\end{align*}
+und
+\begin{align*}
+ p'_i \begin{cases}
+        1 & falls \ p_i = 1 \ und \ B_i = L \\
+        p_i - 1 & falls \ p_i \geq 2 \ und \ B_i = L \\
+        p_i & falls B = S \\
+        p_i + 1 & falls B_i = R
+      \end{cases}
+\end{align*}
+für $i \in [k]$ gelten. \\
+\\
+Es bezeichne $\rightarrow_M$ die Relation auf der Menge der Konfiguration von M so dass C $\rightarrow_M$ C' genau dann für Konfiguration C, C' von M gilt, wenn C' Nachfolgekonfiguration von C ist.
+\end{DefBox}
+
+\begin{DefBox}{(Rechnung)}
+Sei M = \TM eine k-TM. Eine \ulcolor{endliche partielle Rechnung} von M ist eine endliche Folge $C_1,\dots,C_n$ von Konfigurationen vonn M mit $C_i \rightarrow_M C_{i+1}$, $\forall i \in [n-1]$. Eine \ulcolor{unendliche partielle Rechnung} ist eine unendliche Folge $C_1,C_2,\dots$ von Konfiguration mit $C_i \rightarrow_M C_{i+1} \ \forall i \in \N$. Eine \ulcolor{Rechnung} von M zur Eingabe ($w_i,\dots,w_n) \in (\Sigma^*)^n$, wobei $n \in \N$ ist eine endliche partielle Rechnung mit $start_M (w_q,\dots,w_n) = C_1,\dots,C_2,\dots,C_m$ bei der $C_m$ eine Stopkonfiguration von M ist oder eine unendliche partielle Rechnung $start_M (w_q,\dots,w_n) = C_1,C_2,C_3,\dots$
+\end{DefBox}
+\Bem{Bemerkung 2.5} \stepBoxCounter \\
+Ist M = \TM eine k-DTM, so gibt es $\forall n \in \N$ und ($w_1,\dots,w_n) \in (\Sigma^*)^n$ genau eine Rechnung zur Eingabe ($w_1,\dots,w_n$).
+
+\begin{DefBox}{(total)}
+Eine k-DTM M = \TM \ulcolor{terminiert} bei Eingabe ($w_i,\dots,w_n) \in (\Sigma^*)^n$ wenn die Rechnung von M zur Eingabe ($w_i,\dots,w_n)$ endlich ist. Eine k-TM M = \TM ist \ulcolor{total}, wenn für alle n $\in \N$ und ($w_1,\dots,w_n) \in (\Sigma^*)^n$ alle Rechnungen von M zur Eingabe ($w_1,\dots,w_n)$ endlich sind.
+\end{DefBox}
+
+\begin{DefBox}{(akzeptierte Sprache)}
+ Sei M = \TM eine k-TM. Eine Stopkonfiguration (q,$w_i,\dots,w_k,p_1,\dots,p_k)$ von M ist eine \ulcolor{akzeptierend}, wenn $q \in F$ gilt. Die \ulcolor{akzeptierte Sprache L(M)} von M ist die Sprache über dem Alphabet, so dass $\forall w \in \Sigma^*$ genau dann w $\in L(M)$ gilt, wenn es eine endliche Rechnung $C_1,\dots,C_n$ zur Eingabe w gibt, bei der $C_n$ eine akzeptierte Stopkonfiguration von M ist. \\
+ \\
+\textbf{\textcolor{red}{Wichtig:}} Asymmetrie bei nicht deterministischer TM!
+\end{DefBox}
+
+\begin{DefBox}{(entscheidbar)}
+ Eine Sprache L ist genau dann \ulcolor{entscheidbar}, wenn es eine \ulcolor{totale} k-TM mit akzeptierter Sprache L gibt, Wir schreiben REC für die Klasse entscheidbarer Sprachen
+ \end{DefBox}
+ Kommentar: Der Begriff entscheidbar für Sprachen ergibt sich daraus, dass effektiv entschieden werden kann ob eine gegebene Eingabe in der Sprache liegt oder nicht. Insbesondere setzt dies vorraus, dass Eingaben, die nicht in der Sprache liegen \ulcolor{effektiv} als nicht in der Sprache liegend erannt werden. Der Begriff effektiv bedeutet hier, dass es ein algorithmisches Vorgehen, die Arbeitsweise einer TM, gibt, dass endlich viele Schritte zum Ergebnis kommt. \\
+ \\
+ Da sich der durch TM formalisierte Berechenbarkeitsbegriff, also die Formalisierung dessen, was effektiv durchführbar ist auch equivalent durch \ulcolor{rekusive Funktionen} definieren lässt, werden entscheidbare Sprachen auch rekusiv genannt.  \\
+ \\
+ \begin{DefBox}{(rekusiv aufzählbar)}
+  Eine Sprache L ist genau dann \ulcolor{rekusiv aufzählbar}, wenn es eine eine k-TM mit akzeptierter Sprache L gibt. Wir schreiben RE für die Klasse der rekusiv aufzählbaren Sprachen.
+ \end{DefBox}
+
+ Die Aufzählbarkeit leitet sich hier daraus ab, dass es für eine rekusiv aufzählbare Sprache L über einem Alphabet $\Sigma$ möglich ist effektive Verfahren anzugeben, die die Wörter von L aufzählen, also dass eine endlich oder unendliche Aufzählung von A = $w_1,w_2,\dots$ mit $\lbrace w_1,w_2,\dots \rbrace$ = L existiert. \\
+ \\
+ \Bem{Bemerkung 2.10} \\ \stepBoxCounter
+ Jede entscheidbare Sprache ist rekusiv aufzählbar. \\
+ \\
+ \Bem{Bemerkung 2.11} \\ \stepBoxCounter
+ Alle endlichen Sprachen sind entscheidbar. \\
+ \\
+ \Bem{Bemerkung 2.12} \\ \stepBoxCounter
+ Eine Sprache L über einem Alphabet $\Sigma$ ist genau dann entscheidbar, wenn L und $L^C := (\Sigma^*) \backslash L$ rekusiv aufzählbar sind.
+ \begin{DefBox}{(Ausgabe)}
+  Sei M = \TM eine k-TM und C = ($q,w_1,\dots,w_k,p_1,\dots,p_k$) eine Konfiguration von M. Die Ausgabe $out_M$(C) von M bei Konfiguration C ist das Präfix w $\sqsubseteq w_1(p_1)\dots w_1(|w_1|)$ max Länge mit w $\in (\Gamma \backslash \lbrace \Box \rbrace)^*$.
+ \end{DefBox}
+
+ \begin{DefBox}{(berechnete Funktion)}
+  Sei M = \TM eine k-DTM und n $\in \N$. Die von M berechnete \ulcolor{n-äre partielle Funktion} $\varphi_M$ ist die partielle Funktion $\varphi_M : (\Sigma^*)^n \rightsquigarrow (\Gamma \backslash \lbrace \Box \rbrace)^*$, so dass $\forall (w_1,\dots,w_n) \in (\Sigma^*)^n$ folgendes gilt:
+  \begin{itemize}
+   \item Ist die Rechnung von M zur Eingabe $(w_1,\dots,w_n)$ die endliche Rechnung $C_1,\dots,C_m$, so gilt $\varphi_M (w_1,\dots,w_n) = out_M(C_m).$
+   \item Ist die Rechnung von M zur Eingabe $(w_1,\dots,w_n)$ unendliche, so gilt $\varphi_M (w_1,\dots,w_n) \uparrow$
+  \end{itemize}
+Für $w_1,\dots,w_n \in \Sigma^*$ schreiben wir statt $\varphi_M(w_1,\dots,w_n)$ auch $M (w_1,\dots,w_n)$.
+ \end{DefBox}
+
+ \begin{DefBox}{(partiell berechnbar)}
+  Für Alphabete $\Sigma, \Gamma$ und eine partielle Funktion $\varphi: \Sigma^* \rightsquigarrow \Gamma^*$ ist $\varphi$ \ulcolor{partiell berechnbar}, wenn es ein k $\in \N$ gibt und eine k-DTM M mit $\varphi_M = \varphi$ gibt. Ist $\varphi$ total und partiell berechnbar, so ist $\varphi$ berechnbar. Wie schreiben RF für die Klasse der partiell berechnbar partiellen Funktionen.
+ \end{DefBox}
+
+ Mittels der Indentifikation von \NN und $\lbrace 0,1 \rbrace$ können so auch partielle Funktionen, di evon oder nach \NN abbilden als (partiell) berechnbare Funktionen bezeichent werden. Beispielsweise ist eine partielle Funktion $\varphi$ \NN $\rightsquigarrow$ \NN demnach genau dann partiell berechnbar, wenn die partielle Funktion bin $\circ \varphi \circ$ bin partiell berechnbar ist. \\
+ \\
+ Gewissermaßen verfügen die hier definierten TM über zwei Ausgabemechanismen. Die Ausgabe im eigenen Sinne in Def 2.13 und das Ablesen von Akzeptanz anhand des schließlich erreichten Zustands in Def 2.7. Im Sinne der folgenden Bemerkung wäre der weiter Fall nicht notwendig, allerdings ist dies ein wichtiger Spezialfall.
+ \begin{DefBox}{(charakteristische Funktion, partielle charakteristische Funktion)}
+  Sie L eine Sprache über dem Alphabet $\Sigma$
+  \begin{itemize}
+   \item[(i)] Die \ulcolor{charakteristische Funktion} von L also Sprache über $\Sigma$ ist die Funktion
+   \begin{align*}
+    \mathds{1}_L: \Sigma^* \rightarrow \lbrace 0,1 \rbrace \ mit \ \mathds{1}_L(w) = 1 \ \forall w \in L \ und \ \mathds{1}_L (u) = 0 \ \forall w \in \Sigma^* \backslash L
+   \end{align*}
+   \item[(ii)] Die \ulcolor{partiell charakteristische Funktion} von L als Sprache über $\Sigma$ ist die partielle Funktion
+   \begin{align*}
+      \chi_L : \Sigma^* \rightsquigarrow \lbrace 1 \rbrace \ mit \ chi_L(w) = 1 \ \forall w \in L \ und \ \chi_L(w) \uparrow \ \forall w \in \Sigma \backslash L
+   \end{align*}
+  \end{itemize}
+ \end{DefBox}
+
+ \Bem{Bemerkung 2.17} \\ \stepBoxCounter
+ Sei L eine Sprache ünber einem Alphabet $\Sigma$
+ \begin{itemize}
+  \item[(i)] L ist genau dann entscheidbar wenn $\mathds{1}_L$ berechnbar ist.
+  \item[(ii)] L ist genau dann rekusiv aufzählbar, wenn $\chi_L$ partiell berechnbar ist.
+ \end{itemize}
+
+ \begin{DefBox}{(normiert)}
+  Eine 1-DTM M = \TM heißt \ulcolor{normiert}, wenn Q = $\lbrace 0,\dots,n$ für eine n $\in$ \NN, $\Sigma = \lbrace 0,1 \rbrace, \Gamma = \lbrace \Box, 0,1 \rbrace$, s = 0, F = $\lbrace 1 \rbrace$
+ \end{DefBox}
+
+ Alle TMs mit Eingabealphabet $\lbrace 0,1 \rbrace$ lassen sich mit folgenden Schritten in eine normierte TM mit gleicher erkannter Sprache und gleicher berechneten Funktion umwandeln.
+ \begin{itemize}
+  \item Von Nichtdeterminsmus zu Determinismus: Eine DTM kann die Rechnung einer nichtderminierten TM parallel im Sinne von abweichend schrittweise dürchfüren, um schließlich das Verhalten der simulierten TM zu imitieren. Dies entspricht einer \ulcolor{Breitensuche im Rechnungsbaum}
+  \item Von mehreren Bändern zu einem Band: Intuitiv können k Bänder auf einem Band simuliert werden, indem die Felder eines Bandes in k-Teilfelder unterteilt werden, die jeweils die gleichen Bandalphabetbuchstaben wie zuvor als Beschriftung zu zulassen und es zudem erlauben, zu makieren, dass der simulierte Kopf des simulierten Bandes dort steht. \\
+  \\
+  Eine dieser Idee folgende Konstruktion wird als \ulcolor{Spurtechnik} bezeichnet. Formal: Übergang vom Bandalphabet $\Gamma$ zu
+  \begin{align*}
+   ((\Gamma \cup \lbrace \underline{a}: a \in \Gamma \rbrace)^k \backslash \lbrace \Box \rbrace^k) \cup \lbrace \Box \rbrace
+  \end{align*}
+  wobei $\underline{a} \not \in \Gamma$ für a $\in \Gamma$. Hierbei bedeutet $\underline{a}$, dass das simulierte Feld a beschriftet ist und, dass dort der simulierte Kopf steht. Weiter spielt $\Box$ die Rolle des k-Tupels $(\Box,\dots,\Box)$, um der Tatsache gerecht zu werden, dass alle Felder zu Beginn mit $\Box$ beschriftet sind.
+  \item Von beliebigem Bandalphabet zu $\lbrace \Box, 0,1 \rbrace$: Andere Bandalphabete können bei einem \ulcolor{Alphabetwechsel} zum Bandalphabet $\lbrace \Box, 0,1 \rbrace$ simuliert werden, indem mehrere nebeneinander liegende Felder verwendet werden, um ein Symbol des vorherigen Bandalphabets durch ein Binärwort zu beschreiben. Da die TM stehts nur nur ein Feld ließt wird es daher notwendig angrenzende Felder durch Wahl einer geeigneten Zustandsmenge im Zustand zu speichern.
+ \end{itemize}
+\Bem{Bemerkung 2.19} \\ \stepBoxCounter
+Sei L $\subseteq \lbrace 0,1 \rbrace^*$ eine Sprache und sei $\varphi : \lbrace 0,1 \rbrace^* \rightsquigarrow \lbrace 0,1 \rbrace^*$ eine partielle Funktion.
+\begin{enumerate}
+ \item[(i)] L ist genau dann entscheidbar, wenn L akzeptierte Sprache einer \underline{totalen} normierten DTM ist.
+ \item[(ii)] L ist genau dann rekusiv aufzählbar, wenn L akzeptierte Sprache einer normierten DTM ist.
+ \item[(iii)] $\varphi$ ist genau dann partiell berechnbar, wenn $\varphi$ berechnete Funktion einer normierten DTM ist.
+\end{enumerate}
+Tatsächlich ist die Idee sogar, dass die Begriffe wie berechenbar und rekusiv aufzählbar nicht nur unabhängig von den Details der TM wie Determinismus und Bandanzahl sind, sondern dass diese Konzepte in dem Sinne robust sind, dass es keine Rolle spielt, welches formale Berechnungsmodell zu Grunde gelegt wird und das Berechenbarkeit auf einer TM intuitiver Berechenbarkeit entspricht. Diese Indentifikation von intuitiver und formaler Berechenbarkeit wird als Church-Turing-These bezeichnet. \\
+\\
+\textbf{\textcolor{KGN}{Church-Turing-These}} \\ \stepBoxCounter
+Berechenbarkeit auf einer TM entspricht intuitiver Berechenbarkeit \\
+\\
+\textbf{\textcolor{red}{\underline{Wichtig:}}} Diese These kann nicht mathematisch bewiesen/widerlegt werden. \\
+\\
+Oft wird diese Indentifikation herangezogen, um zu begründen, warum eine bestimmte TM existiert.
+\section{3 Berechenbarkeit}
+\setBoxCounter{0}
+\stepDefCounter
+Grundlegende Beobachtung: TM lässt sich ein 'Binärquellcode' zuordnen und damit lässt sich die Menge aller TM linear anordnen ()$\rightsquigarrow$ Standartaufzählung aller TM). \\
+\\
+Hier verwenden wir oft natürliche Zahlen e $\in$ \NN oder Tupel $(e_i,\dots,e_n) \in$ \NN$^n$ als Eingabe für TM. Dies soll implizit bedeuten, dass als Eingabe bin(e) oder das Tupel (bin($e_1),\dots,bin(e_n))$ benutzt wird. Insbesondere erlaubt es uns dies über partiell berechnbare Funktionen mit Definitionsbereich \NN$^n$ und (oder) Zielbereich \NN zu sprechen und Teilmenge L ¤$\subseteq$ \NN als Sprachen (über$\lbrace 0,1 \rbrace$) aufzufassen.
+
+\begin{DefBox}{(Code)}
+Wir betrachten eine Funktion code (mit geeignetem Definitionsbereich) und Zielmenge $\lbrace 0,1 \rbrace^*$, so dass folgendes gilt. Zunächst seien code(L) = 10, code(S) = 00, code(R) = 01. Für eine Instruktion
+\begin{align*}
+ I = (q,a,q',a',B) \in \mathbb{N}_0 \times \lbrace 0,1,\Box \rbrace \times \mathbb{N}_0 \times \lbrace 0,1,\Box \rbrace \times \lbrace L,S,R \rbrace
+\end{align*}
+eine normiert TM sei
+\begin{align*}
+ code(I) := 0^{|bin(q)|} \ 1 \ bin(q) \ f(a) \ 0^{|bin(q')|} \ 1 \ bin(q') \ f(a') \ code(B)
+\end{align*}
+wobei f(0) = 00, f(1) = 11 und f($\Box$) = 10 und für eine endliche Menge $\Delta \subseteq \mathbb{N}_0 \times \lbrace 0,1,\Box \rbrace \times \mathbb{N}_0 \times \lbrace 0,1,\Box \rbrace \times \lbrace L,S,R$ von Instruktion einer normierten TM und i $\in [|\Delta|]$ sei $code_i(\Delta)$ das in längenlexikographische Ordnung i-te Wort in $\lbrace$code(I): I $\in \Delta \rbrace$ und sei code($\Delta) := \ code_1(\Delta) \dots code_{|\Delta|}(\Delta)$. \\
+\\
+Für eine normiert TM M = $(\lbrace 0,\dots,n), \lbrace 0,1 \rbrace, \lbrace 0,1,\Box \rbrace, \Delta, 0, \lbrace 1 \rbrace)$ Sei
+\begin{align*}
+ code(M) := 0^{|bin(n)|} 1 \ bin(n) \ code(\Delta)
+\end{align*}
+der \ulcolor{Code} von M.
+\end{DefBox}
+
+\textbf{Kommentar:} Die Details der Codierung von TM sind weitgehend unwichtig. Relevant ist, dass es eine geeignete effektive Codierung von TM durch Binärwörter mit folgenden Eigenschaften gibt:
+\begin{itemize}
+ \item Jede normiert TM hat einen Code
+ \item Die Sprache der Codes von TM ist entscheidbar
+ \item Codes können in geeignete Repräsentation der durch sie codierten TM umgewandelt werden, die es insbesondere erlauben die codierten TM effektiv zu simulieren.
+ \item geeignete Repräsentation von TM können effektiv in ihre Codes umgewandelt werden.
+\end{itemize}
+
+\begin{DefBox}{(Standartaufzählung)}
+Sei $\hat{w}_0, \hat{w}_1,\dots$ die Aufzählung aller Codes aller normierten TM in längenlexikographische Ordnung. Für e $\in$ \NN, sei $M_e$ die durch $\hat{w}_e$ codierte DTM und für n $\in \N$ sei
+$\Phi^n_e : \mathbb{N}_0 \rightsquigarrow \mathbb{N}_0$ die von $M_e$ berechnete n-äre partielle Funktion. Für $n \in \N$, heißt die Folge ($\Phi_e^n)_{e \in \mathbb{N}_{0}}$ \ulcolor{Standartaufzählung} der n-ären partiell berechenbaren partiellen Funktion. Für n $\in \N$, und eine partiell berechenbare n-äre partielle Funktion $\varphi : \mathbb{N}_0^n \rightsquigarrow \N_0$ heißt jede natürliche Zahl e mit $\Phi_e^n = \varphi$ \ulcolor{Index} von $\varphi$
+\end{DefBox}
+Ergibt sich n aus dem Kontext, so schreiben wir auch $\Phi_e$ anstatt $\Phi_e^n$  \\
+\\
+\Bem{Bemerkung 3.3} \stepBoxCounter \\
+Für n $in \N$ und eine partiell berechenbare n-äre partielle Funktion $\varphi : \N_0^n \rightsquigarrow \N_0$ gibt es unendliche viele Indices von $\varphi$.
+
+\begin{DefBox}{($\mathcal{U}$)}
+Es bezeichne \ulcolor{$\mathcal{U}$} die normiert DTM, die bei Eingabe (e,$x_1,\dots,x_n) \in \N_0^{n+1}$, die normiert DTM $M_e$ bei Eingabe ($x_1,\dots,x_n$) simuliert und falls diese terminiert die Ausgabe der Simulation ausgibt.
+\end{DefBox}
+
+\begin{DefBox}{(universell)}
+ Eine DTM $\mathcal{U}$ heißt \ulcolor{universell}, wenn es für alle n $\in \N$ und alle partiell berechenbar partielle Funktionen $\varphi : \N_0^n \rightsquigarrow \N_0$ ein e $\in \N_0$ gibt, so dass
+ \begin{align*}
+  \mathcal{U} (e,x_1,\dots,x_n) = \varphi(x_1,\dots,x_n)
+ \end{align*}
+ $\forall x_1,\dots,x_n \in \N_0$
+\end{DefBox}
+\Bem{Bemerkung 3.6} \stepBoxCounter \\
+Die TM $\mathcal{U}$ ist universell, denn für e $\in \N_0, n \in N$ und $x_1,\dots,x_n \in \N_0$ gilt
+\begin{align*}
+ \varphi_{\mathcal{U}} (e,x_1,\dots,x_n) = \Phi_e (x_1,\dots,x_n)
+\end{align*}
+Kommentar: Anschaulich spielen universell DTMs und insbesondere $\mathcal{U}$, eine ähnliche Rolle wie Computer oder Interpreter interpretierter Programmiersprachen. Für jedes Vorgehen gibt es einen Code, so dass die universelle DTM bei Eingabe des Codes das Vorgehen ausführt. \\
+\\
+\Satz{Satz 3.7} (Padding Lemma) \stepBoxCounter \\
+Es existiert eine berechenbare injektive Funktion p: $\N_0^2 \rightarrow \N_0$ mit $\Phi_{p(e,i)} = \Phi_e \ \forall e,i \in \N_0$
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
