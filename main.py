@@ -4,7 +4,9 @@
 import sys
 import os
 import re
+import webbrowser
 
+from pyvis.network import Network
 
 class PackageClass:                                                                                                     ## Class to create Parents and know which Children are connected to the parent
 
@@ -71,16 +73,17 @@ def helpmessage():                                                              
 def outfile(arguments):                                                                                                 ## Find outfile name and makes sure it is a .tex file. Defaults to graph.tex
     if "--outfile" in arguments:
         outfilename = arguments[arguments.index("--outfile")+1]
-        if ".tex" in outfilename:
+        if ".html" in outfilename:
             return outfilename
         else:
-            return outfilename + ".tex"
+            return outfilename + ".html"
     else:
-        return "graph.tex"
+        return "graph.html"
 
 
 def flatten(xss):
     return [x for xs in xss for x in xs]
+
 
 def loadseedfile(seedfile, pathgiven= False):                                                                           ## Loads the seedfile and finds the oackages loaded in the file
     if pathgiven == False:
@@ -124,11 +127,13 @@ def loadseedfile(seedfile, pathgiven= False):                                   
 
         return check_list
 
+
 def findchild(Parent):
     parentpath = Parent.getpath()
     children = loadseedfile(parentpath, True)
 
     return children
+
 
 def findfile(filename, path):                                                                                           ## Function used to find the file path for later use
     for root, dirs, files in os.walk(path):
@@ -156,6 +161,8 @@ if __name__ == '__main__':
         except(IndexError):                                                                                             ## Catches Error if --options was given, but no outputfile name
             print("Something went wrong. Try again (Index was out of bounce, missing outfile name?)")
             sys.exit(2)
+
+## Packagefinder
 
     currentdirectory = os.getcwd()
     parent = PackageClass(seedfilename, currentdirectory + "/" + seedfilename ,None)                             ## Creates main parent
@@ -185,7 +192,7 @@ if __name__ == '__main__':
                 childs.append(child)
 
 
-    print("\n "
+    print("\n"
           "All packages requierd by", seedfilename, "should be found. \n"
           "\n"
           "Inputfile has the following packages: \n",
@@ -196,3 +203,19 @@ if __name__ == '__main__':
         if not items.childlistempty():
             print("- Package", items.name ,"requiers: ",
                 items.childlist)
+
+## Graph
+    net = Network(width="100%", height=1000, directed=True)
+    net.add_node(parent.name, label=parent.name, color="#00ff1e", shape="circle")
+
+    for items in childs:
+        net.add_node(items.name, label=items.name, inherit_edge_colors=False, shape="circle")
+        net.add_edge(items.parent, items.name)
+
+    net.inherit_edge_colors(False)
+    net.force_atlas_2based(overlap=1)
+
+    net.save_graph(outfilename)
+
+    url = findfile(outfilename, ".")
+    webbrowser.open(url, new=2)
