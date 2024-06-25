@@ -1,14 +1,15 @@
 ## This skript takes a LaTeX document and checks the dependencies
 
 ## Import Statements
-import sys
 import os
 import re
+import sys
 import webbrowser
+import argparse
 
 from pyvis.network import Network
 
-class PackageClass:                                                                                                     ## Class to create Parents and know which Children are connected to the parent
+class PackageClass:
 
     def __init__(self, name, path, parent):
         self.name = name
@@ -23,9 +24,8 @@ class PackageClass:                                                             
         self.childpaths.append(findfile(items + ".sty", "/usr/share/texlive/texmf-dist/tex"))
 
 
-#    def printchild(self):
-#        for items in self.childlist:
-#            print(items)
+    def printchildlist(self):
+       print(self.childlist)
 
     def setchildlist(self, list):
         self.childlist = list
@@ -55,22 +55,8 @@ class PackageClass:                                                             
         else:
             return False
 
-def helpmessage():                                                                                                      ## Displays helpmessage if no arguments are provided
-    print("Usage:", sys.argv[0], "[OPTIONS] [SEEDS] \n"
-          "\n"
-          "This skript will parse a LaTeX seed file and parse which \n" 
-          "other files they require. Dependent files will only be \n" 
-          "considered if they mathc a given regular expressin, which \n"
-          "defaults to 'all'. \n " 
-          "\n"
-          "OPTIONS can be: \n"
-          "     --outfile <name> [default is graph.tex] \n" 
-          "\n"
-          "Examples: \n"
-          "     ParserforDependencies.py --outfile graph.tex source.tex")
 
-
-def outfile(arguments):                                                                                                 ## Find outfile name and makes sure it is a .tex file. Defaults to graph.tex
+def outfile(arguments):
     if "--outfile" in arguments:
         outfilename = arguments[arguments.index("--outfile")+1]
         if ".html" in outfilename:
@@ -85,7 +71,7 @@ def flatten(xss):
     return [x for xs in xss for x in xs]
 
 
-def loadseedfile(seedfile, pathgiven= False):                                                                           ## Loads the seedfile and finds the oackages loaded in the file
+def loadseedfile(seedfile, pathgiven= False):
     if pathgiven == False:
         filepath = os.path.abspath(seedfile)
     else:
@@ -135,7 +121,7 @@ def findchild(Parent):
     return children
 
 
-def findfile(filename, path):                                                                                           ## Function used to find the file path for later use
+def findfile(filename, path):
     for root, dirs, files in os.walk(path):
         if filename in files:
             return os.path.join(root, filename)
@@ -144,35 +130,41 @@ def findfile(filename, path):                                                   
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 1:
-        helpmessage()
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-outfile", "--outfilename", help="Name of the outfile. Should end with .html but programm will add it.")
+    parser.add_argument("-s", "--sourcefile", help="Name of the sourcefile. Has to be a .tex in current directory.")
+    parser.add_argument("-b", "--browser", help="If True, programm will open the .html file at the end. If False it only gets saved.", default=False, type=bool)
+
+    args = parser.parse_args()
+
+    if args.sourcefile == None:
+        print("Missing sourcefile. Please give a sourcefile. \n"
+              "\n"
+              "Example: python3 main.py -s example.tex \n"
+              "\n"
+              "For further help enter: python3 main.py -h \n")
         sys.exit(1)
 
-    outfilename = outfile(sys.argv)
+    outfilename = args.outfilename
+    if ".html" not in outfilename:
+        outfilename = outfilename + ".html"
 
-    if "--outfile" not in sys.argv:                                                                                     ## Gets teh seedfile name out of the argv dependeing on if an --options was used
-        seedfile = loadseedfile(sys.argv[1])
-        seedfilename = sys.argv[1]
-    else:
-        indexofseed = sys.argv.index("--outfile") + 2
-        try:
-            seedfile = loadseedfile(sys.argv[indexofseed])
-            seedfilename = sys.argv[indexofseed]
-        except(IndexError):                                                                                             ## Catches Error if --options was given, but no outputfile name
-            print("Something went wrong. Try again (Index was out of bounce, missing outfile name?)")
-            sys.exit(2)
+    sourcefile = loadseedfile(args.sourcefile)
+    sourcefilename = args.sourcefile
 
 ## Packagefinder
 
     currentdirectory = os.getcwd()
-    parent = PackageClass(seedfilename, currentdirectory + "/" + seedfilename ,None)                             ## Creates main parent
+    parent = PackageClass(sourcefilename, currentdirectory + "/" + sourcefilename ,None)
 
-    for items in seedfile:                                                                                              ## adds children with their given paths
+    for items in sourcefile:
         parent.addchild(items)
 
     childs = []
 
-    for i, items in enumerate(parent.childlist):                                                                        ## Creates child opjects
+    for i, items in enumerate(parent.childlist):
         child = PackageClass(items, parent.getchildpath(i),parent.name)
         childs.append(child)
 
@@ -182,18 +174,25 @@ if __name__ == '__main__':
 
     for items in childs:
         if items.childlistempty():
-            print("No further packages requierd by ", items.name)
+            print("No further packages requierd by", items.name, "\n"
+                  "\n"
+                  "Checking next child \n"
+                  "\n")
         else:
-            print("Further packages requierd by ", items.name)
+            print("Further packages requierd by", items.name, "\n"
+                  "\n"
+                  "Fetching packages requierd by", items.name, "\n")
+
             for i, children in enumerate(items.childlist):
                 child = PackageClass(children, items.getchildpath(i), items.name)
                 childrenofchild = findchild(child)
                 child.setchildlist(childrenofchild)
                 childs.append(child)
+                print("New child found:", child.name, "\n")
 
 
     print("\n"
-          "All packages requierd by", seedfilename, "should be found. \n"
+          "All packages requierd by", sourcefilename, "should be found. \n"
           "\n"
           "Inputfile has the following packages: \n",
           parent.childlist, "\n"
@@ -215,7 +214,14 @@ if __name__ == '__main__':
     net.inherit_edge_colors(False)
     net.force_atlas_2based(overlap=1)
 
+    net.toggle_physics(False)
     net.save_graph(outfilename)
 
-    url = findfile(outfilename, ".")
-    webbrowser.open(url, new=2)
+    if args.browser == True:
+        url = findfile(outfilename, ".")
+        webbrowser.open(url, new=2)
+
+    print("\n"
+          "Outputfile with Graph has been generated. Filename is", outfilename, "\n"
+          "\n"
+          "Programm finished without errors \n")
