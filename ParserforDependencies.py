@@ -119,23 +119,26 @@ def search_texfile_for_class(filepath):
 def search_texfile_for_packages(filepath):
     pattern = r"\{(.*?)\}"
 
-    with open(filepath, "r") as file:
-        keywords = ["\\usepackage", "\\RequirePackage", "RequirePackageWithOptions"]
+    try:
+        with open(filepath, "r") as file:
+            keywords = ["\\usepackage", "\\RequirePackage", "RequirePackageWithOptions"]
 
-        found_packages = []
+            found_packages = []
 
-        for lines in file:
-            for keyword in keywords:
-                if keyword in lines:
-                    found_packages.append(re.findall(pattern, lines))
+            for lines in file:
+                for keyword in keywords:
+                    if keyword in lines:
+                        found_packages.append(re.findall(pattern, lines))
 
 
-        flatten_list = flatten(found_packages)
+            flatten_list = flatten(found_packages)
 
-        finished_list = split_string_by_comma(flatten_list)
+            finished_list = split_string_by_comma(flatten_list)
 
-        return add_ending(finished_list)
-
+            return add_ending(finished_list)
+    except FileNotFoundError:
+        print(f"The given sourcefile doesn`t exist. Your current sourcefile name is {filepath}. Please check, that you spelled the name correctly. \n")
+        sys.exit(2)
 
 # Function to search for options within a tex file
 def search_for_options(filepath, packagename):
@@ -282,4 +285,3 @@ if __name__ == "__main__":
     if args.b == True:
         url = find_path(outfilename, ".")
         webbrowser.open(url, new=2)
-
