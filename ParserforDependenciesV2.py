@@ -6,7 +6,6 @@ import argparse
 
 from pyvis.network import Network
 
-
 class Package:
 
     # Variables of the class Package:
@@ -99,7 +98,6 @@ def find_path(packagename, path):
         if packagename in files:
             return os.path.join(root, packagename)
 
-
 def split_string_by_comma(oldlist):
     newlist = []
 
@@ -140,7 +138,6 @@ def search_texfile_for_packages(filepath, filename):
                 for keyword in keywords:
                     if keyword in lines:
                         found_packages.append(re.findall(pattern, lines))
-
 
             flatten_list = flatten(found_packages)
 
@@ -235,7 +232,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-outfile", "--outfilename", help="Name of the outfile. Should end with .html but programm will add it.")
     parser.add_argument("-s", "--sourcefile", help="Name of the sourcefile. Has to be a .tex in current directory.")
-    parser.add_argument("-b", default=False, action="store_true", help="If set the outfile will be open at the end. Default is false.")
+    parser.add_argument("-b", default=True, action="store_false", help="If set the outfile will not be opened at the end. Default is true.")
 
     args = parser.parse_args()
 
@@ -308,8 +305,6 @@ if __name__ == "__main__":
             else:
                 print(f"- Package {items.packagename} requiers: {items.childlist}")
 
-
-
 ## Graph
 
     net = Network(width="100%", height=1000, directed=True, select_menu=True, filter_menu=True)
@@ -317,11 +312,11 @@ if __name__ == "__main__":
 
     for items in active_childlist:
         net.add_node(items.packagename, label=items.packagename, shape="circle")
-        net.add_edge(items.parent, items.packagename)
         if items.has_options():
-            for options in items.optionlist:
-                net.add_node(options, label=options,     shape="circle", color="#ffff1e")
-                net.add_edge(items.packagename, options, label="has option", dashes=True, arrows="")
+            print(f"In if option. Optionlist is: {items.optionlist}")
+            net.add_edge(items.parent, items.packagename, label=str(items.optionlist))
+        else:
+            net.add_edge(items.parent, items.packagename)
 
     net.inherit_edge_colors(False)
     net.force_atlas_2based(overlap=1)
